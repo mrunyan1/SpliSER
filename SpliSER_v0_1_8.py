@@ -16,6 +16,8 @@ import numpy
 from operator import add, truediv, mul, sub
 import bisect
 from ast import literal_eval
+from tqdm import tqdm
+import pysam
 
 
 digit_pattern = re.compile(r'\D')
@@ -419,14 +421,15 @@ def checkBam(bedFile, sSite, sample, isStranded, strandedType):
 		partners.append(partner)
 
 	#Call Samtools view to get all reads mapping across the splice site of interest.
-	bamview = subprocess.Popen(['samtools', 'view', str(bedFile), str(sSite.getChromosome())+':'+str(targetPos)+'-'+str((int(targetPos)+1))], stdout = subprocess.PIPE)
+	#bamview = subprocess.Popen(['samtools', 'view', str(bedFile), str(sSite.getChromosome())+':'+str(targetPos)+'-'+str((int(targetPos)+1))], stdout = subprocess.PIPE)
 	#, stderr=subprocess.DEVNULL)
 	 #--threads ', str(threads),' ', #Can Multithread, why not?
-	bamstream = bamview.stdout
+	#bamstream = bamview.stdout
+	bamstream = bedFile.fetch(str(sSite.getChromosome()), targetPos, int(targetPos)+1)
 
 	for line in bamstream:#get the reads one by one
-		dline = line.decode('ascii')
-		values = str(dline).split('\t')
+		#dline = line.decode('ascii')
+		values = line.to_string().split('\t')
 		cPos = -1
 
 
@@ -683,17 +686,18 @@ def processSites(inBAM, qChrom, isStranded, strandedType,isbeta2Cryptic, sample 
 	for c in chrom_index:
 		print("Processing region "+str(c))
 		if qChrom == c or qChrom =="All":
-			for idx, site in enumerate(site2D_array[chrom_index.index(c)]):
+			for idx, site in enumerate(tqdm(site2D_array[chrom_index.index(c)], desc="checkBam|chr=%s" % c)):
 				#Go assign Beta 1 type reads from BAM file
 				checkBam(inBAM, site, sample, isStranded, strandedType)
 			#Once this is done for all sites, we can calculate SSE
-			for idx, site in enumerate(site2D_array[chrom_index.index(c)]):
+			for idx, site in enumerate(tqdm(site2D_array[chrom_index.index(c)], desc="beta&sse|chr=%s" % c)):
 				findBeta2Counts(site, numsamples)
 				calculateSSE(site,isbeta2Cryptic)
 
 
 def process(inBAM, inBed, outputPath, qGene, qChrom, maxIntronSize, annotationFile,aType, isStranded, strandedType, isbeta2Cryptic):
 	print('Processing')
+	inBAM = pysam.AlignmentFile(inBAM, "rb")
 	if isStranded:
 		print('Stranded Analysis {}'.format(strandedType))
 	else:
@@ -718,6 +722,7 @@ def process(inBAM, inBed, outputPath, qGene, qChrom, maxIntronSize, annotationFi
 
 	print('\nOutputting .tsv file')
 	outputBedFile(outputPath,isbeta2Cryptic)
+	inBAM.close()
 
 def outputCombinedLines(outTSV, site, gene,isbeta2Cryptic):
 	for idx, t in enumerate(allTitles): # for each sample
@@ -753,7 +758,7 @@ def combine(samplesFile, outputPath,qGene, isStranded, strandedType, isbeta2Cryp
 			samples +=1
 			allTitles.append(values[0]) # record the sample moniker
 			bedPaths.append(values[1]) # record the bed file paths
-			BAMPaths.append(values[2].rstrip()) # record BAM file paths
+			BAMPaths.append(pysam.Samfile(values[2].rstrip())) # record BAM file paths
 		elif len(values) >= 0:
 			print(str(allTitles), str(bedPaths), str(BAMPaths))
 			raise Exception('Samples File contains lines that do not have exactly 3 tab-separated columns')

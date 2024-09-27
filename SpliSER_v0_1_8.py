@@ -1379,6 +1379,7 @@ if __name__ == "__main__":
 	parser_combine.add_argument('--isStranded', dest='isStranded', default=False, action='store_true')
 	parser_combine.add_argument('-s', '--strandedType', dest='strandedType', nargs='?', default="fr", type=str, required=False, help="optional: Strand specificity of RNA library preparation, where \"rf\" is first-strand/RF and \"fr\" is second-strand/FR - default : fr")
 	parser_combine.add_argument('--beta2Cryptic', dest='isbeta2Cryptic', default=False, action='store_true', help="optional: Calculate SSE of sites taking into account the weighted utilisation of competing splice sites as indirect evidence of site non-utilisation (Legacy).")
+	parser_combine.add_argument('--n_jobs', dest='n_jobs', type=int, default=1, help="Number of threads to use.")
 
 	parser_combineShallow = subparsers.add_parser('combineShallow')
 	parser_combineShallow.add_argument('-S', '--samplesFile', dest='samplesFile', required=True, help="A three-column .tsv file, each line containing a sample name, the absolute path to a processed .SpliSER.tsv file input, and the absolute path to the original bam file")

@@ -729,7 +729,7 @@ def process(inBAM, inBed, outputPath, qGene, qChrom, maxIntronSize, annotationFi
 	outputBedFile(outputPath,isbeta2Cryptic)
 	inBAM.close()
 
-def outputCombinedLines(outTSV, site, gene,isbeta2Cryptic):
+def outputCombinedLines(outTSV, site, gene,isbeta2Cryptic, allTitles):
 	for idx, t in enumerate(allTitles): # for each sample
 		outTSV.write(str(t)+"\t")
 		outTSV.write(str(site.getChromosome())+"\t")

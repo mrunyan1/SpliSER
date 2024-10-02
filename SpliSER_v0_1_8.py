@@ -23,6 +23,8 @@ import tempfile
 import shutil
 import logging
 from concurrent.futures import ThreadPoolExecutor
+from joblib import Parallel, delayed
+
 
 
 digit_pattern = re.compile(r'\D')
